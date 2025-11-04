@@ -15,7 +15,8 @@ export type Page =
   | 'assistant-creator' 
   | 'ai-assistants' 
   | 'projects' 
-  | string;
+  | string
+  | null;
 
 interface NavigationContextType {
   currentPage: Page;
@@ -27,7 +28,8 @@ interface NavigationContextType {
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
 
 export function NavigationProvider({ children }: { children: ReactNode }) {
-  const [currentPage, setCurrentPage] = useState<Page>('signup');
+  // Initialize with null, will be set by auth state
+  const [currentPage, setCurrentPage] = useState<Page>(null);
   const [previousPage, setPreviousPage] = useState<Page | null>(null);
 
   const navigate = (page: Page) => {

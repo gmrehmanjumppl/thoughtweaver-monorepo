@@ -1621,10 +1621,13 @@ PORT=3001 pnpm dev
 **Last Updated**: November 2025  
 **Related Documents**: 
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - Complete architecture guide
+- [COMPLETE_TECHNICAL_DOCUMENTATION.md](./COMPLETE_TECHNICAL_DOCUMENTATION.md) - Complete technical implementation details
+- [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) - Migration instructions
+- [SUPABASE_OAUTH_SETUP.md](./SUPABASE_OAUTH_SETUP.md) - Complete OAuth setup guide
+- [CLIENT_DEPLOYMENT_CONFIG.md](./CLIENT_DEPLOYMENT_CONFIG.md) - Client deployment configuration guide
 - [FIGMA_INTEGRATION.md](./FIGMA_INTEGRATION.md) - Figma sync setup
 - [TESTING_STRATEGY.md](./TESTING_STRATEGY.md) - Testing guide
-- [SUPABASE_OAUTH_SETUP.md](./SUPABASE_OAUTH_SETUP.md) - Complete OAuth setup guide
-- [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) - Migration instructions
-- [CLIENT_DEPLOYMENT_CONFIG.md](./CLIENT_DEPLOYMENT_CONFIG.md) - Client deployment configuration guide
-- [COMPLETE_TECHNICAL_DOCUMENTATION.md](./COMPLETE_TECHNICAL_DOCUMENTATION.md) - **Complete technical implementation details, fixes, and code**
+- [LLM_API_KEY_GUIDE.md](./LLM_API_KEY_GUIDE.md) - LLM API key strategy guide
+
+**Troubleshooting & Fixes**: See [extras/](./extras/) folder for fix documentation and troubleshooting guides
 

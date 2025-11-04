@@ -68,16 +68,42 @@ function AppContent() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { currentPage, navigate } = useNavigation();
 
+  // Clear hash fragment from URL after Supabase processes it (Supabase OAuth adds #)
+  useEffect(() => {
+    const hash = window.location.hash;
+    
+    // If hash contains access_token, wait for Supabase to process OAuth callback
+    if (hash.includes('access_token')) {
+      const timer = setTimeout(() => {
+        if (window.location.hash) {
+          console.log('Clearing OAuth hash fragment');
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      }, 2000); // Wait 2 seconds for Supabase to process OAuth callback
+      
+      return () => clearTimeout(timer);
+    } else if (hash) {
+      // Immediately clear non-auth hash fragments (like after logout)
+      console.log('Clearing hash fragment:', hash);
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }, []);
+
   // Navigate to home when user becomes authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      if (currentPage === 'signup' || !currentPage) {
+    if (isAuthenticated && user) {
+      // Force navigation to home if on signup page or no page set
+      if (currentPage === 'signup' || currentPage === null || !currentPage) {
+        console.log('Navigating to home after authentication');
         navigate('home');
       }
-    } else if (!isAuthenticated && currentPage !== 'signup') {
-      navigate('signup');
+    } else if (!isAuthenticated && !isLoading) {
+      // Navigate to signup if not authenticated and not already on signup
+      if (currentPage !== 'signup') {
+        navigate('signup');
+      }
     }
-  }, [isAuthenticated, currentPage, navigate]);
+  }, [isAuthenticated, user, isLoading, currentPage, navigate]);
 
   // Show loading state while checking auth
   if (isLoading) {
@@ -96,8 +122,13 @@ function AppContent() {
     return <SignupPage />;
   }
 
-  // If authenticated but no valid page, show home
-  if (isAuthenticated && currentPage === 'signup') {
+  // If authenticated but no page selected or on signup page, navigate to home
+  if (isAuthenticated && (currentPage === null || currentPage === 'signup' || !currentPage)) {
+    // This will trigger navigation via useEffect
+    if (currentPage !== 'home') {
+      navigate('home');
+    }
+    // Show loading while navigating
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center gap-3">

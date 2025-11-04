@@ -24,19 +24,36 @@ import {
   Home,
   Bot,
   FolderOpen,
-  FileText
+  FileText,
+  LogOut
 } from 'lucide-react';
 import { useAuth, useNavigation, useConversation } from '../../contexts';
 import { ContextSelector } from '../shared/ContextSelector';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
 
 interface AppLayoutProps {
   children: ReactNode;
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { currentPage, navigate } = useNavigation();
   const { conversations, activeConversationId, viewConversation, projects } = useConversation();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('signup');
+    } catch (error) {
+      console.error('Failed to logout:', error);
+    }
+  };
   
   // R2: Projects hidden, so show all conversations
   // Get all conversation IDs that are assigned to projects
@@ -269,18 +286,33 @@ export function AppLayout({ children }: AppLayoutProps) {
           </SidebarContent>
 
           <SidebarFooter className="border-t border-sidebar-border p-4">
-            <button 
-              onClick={() => navigate('account')}
-              className="flex items-center gap-3 w-full hover:bg-sidebar-accent rounded-lg p-2 transition-colors"
-            >
-              <Avatar className="w-9 h-9">
-                <AvatarImage src={user?.avatar} />
-                <AvatarFallback>{user?.name?.[0] || 'U'}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0 text-left">
-                <p className="text-sm truncate">{user?.name}</p>
-              </div>
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button 
+                  className="flex items-center gap-3 w-full hover:bg-sidebar-accent rounded-lg p-2 transition-colors"
+                >
+                  <Avatar className="w-9 h-9">
+                    <AvatarImage src={user?.avatar} />
+                    <AvatarFallback>{user?.name?.[0] || 'U'}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium truncate">{user?.name || 'User'}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => navigate('account')}>
+                  <Settings className="w-4 h-4 mr-2" />
+                  Account Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarFooter>
         </Sidebar>
 

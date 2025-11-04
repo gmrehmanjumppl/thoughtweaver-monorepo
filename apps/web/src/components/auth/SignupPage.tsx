@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Lightbulb } from 'lucide-react';
@@ -6,13 +7,25 @@ import { useAuth, useNavigation } from '../../contexts';
 export function SignupPage() {
   const { login } = useAuth();
   const { navigate } = useNavigation();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleGoogleSignup = async () => {
+  const handleGoogleSignup = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isLoading) return; // Prevent double clicks
+    
     try {
+      setIsLoading(true);
+      console.log('Starting Google OAuth login...');
       await login('google');
+      console.log('Google OAuth login initiated');
       // Navigation will happen automatically via auth state change
+      // Note: signInWithOAuth redirects the page, so code after this may not execute
     } catch (error) {
+      setIsLoading(false);
       console.error('Google signup error:', error);
+      alert(`Login error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       // You can add error toast/notification here
     }
   };
@@ -45,6 +58,7 @@ export function SignupPage() {
               onClick={handleGoogleSignup}
               variant="outline"
               className="w-full h-12 gap-3"
+              disabled={isLoading}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -64,7 +78,7 @@ export function SignupPage() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Continue with Google
+              {isLoading ? 'Redirecting...' : 'Continue with Google'}
             </Button>
 
             <Button
