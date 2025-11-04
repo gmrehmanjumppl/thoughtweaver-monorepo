@@ -2,10 +2,13 @@
  * ContextSelector Component
  * 
  * Modal dialog for selecting a context to apply to the current page/conversation
+ * 
+ * NOTE: This component requires app-specific context data. 
+ * Consider moving this to apps/web/src/components/shared/ if it needs useContextCards.
  */
 
 import { useState } from 'react';
-import { Button } from '../ui/button';
+import { Button } from '../components/button';
 import {
   Dialog,
   DialogContent,
@@ -13,20 +16,36 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../ui/dialog';
-import { Checkbox } from '../ui/checkbox';
-import { Label } from '../ui/label';
-import { Badge } from '../ui/badge';
+} from '../components/dialog';
+import { Checkbox } from '../components/checkbox';
+import { Label } from '../components/label';
+import { Badge } from '../components/badge';
 import { FileText, Share2 } from 'lucide-react';
-import { useContextCards } from '../../contexts';
+
+interface Context {
+  id: string;
+  name: string;
+  content: string;
+  shared?: boolean;
+}
 
 interface ContextSelectorProps {
+  /** List of available contexts */
+  contexts: Context[];
+  /** Currently selected context IDs */
+  selectedContextIds: string[];
+  /** Callback when context selection changes */
+  setSelectedContextIds: (ids: string[]) => void;
   /** Optional callback when context is selected */
   onContextChange?: (contextIds: string[]) => void;
 }
 
-export function ContextSelector({ onContextChange }: ContextSelectorProps) {
-  const { contexts, selectedContextIds, setSelectedContextIds } = useContextCards();
+export function ContextSelector({ 
+  contexts,
+  selectedContextIds,
+  setSelectedContextIds,
+  onContextChange 
+}: ContextSelectorProps) {
   const [open, setOpen] = useState(false);
   const [tempSelection, setTempSelection] = useState<string[]>(selectedContextIds);
 

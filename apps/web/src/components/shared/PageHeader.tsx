@@ -13,8 +13,7 @@
  */
 
 import React, { ReactNode } from 'react';
-import { Button } from '../ui/button';
-import { SidebarTrigger } from '../ui/sidebar';
+import { Button, SidebarTrigger } from '@thoughtweaver/ui';
 import { ArrowLeft } from 'lucide-react';
 import { ContextSelector } from './ContextSelector';
 

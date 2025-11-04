@@ -13,8 +13,8 @@
  */
 
 import React, { ReactNode } from 'react';
-import { Button } from '../ui/button';
-import { SidebarTrigger } from '../ui/sidebar';
+import { Button } from '../components/button';
+import { SidebarTrigger } from '../components/sidebar';
 import { ArrowLeft } from 'lucide-react';
 import { ContextSelector } from './ContextSelector';
 

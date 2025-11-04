@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { Badge } from '../ui/badge';
-import { SidebarTrigger } from '../ui/sidebar';
-import { Switch } from '../ui/switch';
 import {
+  Button,
+  Card,
+  Input,
+  Textarea,
+  Badge,
+  SidebarTrigger,
+  Switch,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -15,7 +15,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../ui/alert-dialog';
+} from '@thoughtweaver/ui';
 import { 
   Plus,
   Edit,

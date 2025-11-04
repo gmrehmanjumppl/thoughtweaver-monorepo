@@ -5,18 +5,18 @@
  */
 
 import { useState } from 'react';
-import { Button } from '../ui/button';
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../ui/dialog';
-import { Checkbox } from '../ui/checkbox';
-import { Label } from '../ui/label';
-import { Badge } from '../ui/badge';
+  Checkbox,
+  Label,
+  Badge,
+} from '@thoughtweaver/ui';
 import { FileText, Share2 } from 'lucide-react';
 import { useContextCards } from '../../contexts';
 

@@ -1,12 +1,16 @@
 import { useState } from 'react';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { Label } from '../ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Badge } from '../ui/badge';
-import { SidebarTrigger } from '../ui/sidebar';
+import {
+  Button,
+  Card,
+  Input,
+  Textarea,
+  Label,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Badge,
+  SidebarTrigger,
+} from '@thoughtweaver/ui';
 import { 
   Save,
   Sparkles,

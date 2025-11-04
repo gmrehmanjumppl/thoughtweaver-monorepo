@@ -14,8 +14,15 @@ import {
   SidebarMenuSubButton,
   SidebarProvider,
   SidebarTrigger,
-} from '../ui/sidebar';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@thoughtweaver/ui';
 import { 
   Workflow,
   Settings,
@@ -29,13 +36,6 @@ import {
 } from 'lucide-react';
 import { useAuth, useNavigation, useConversation } from '../../contexts';
 import { ContextSelector } from '../shared/ContextSelector';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
 
 interface AppLayoutProps {
   children: ReactNode;

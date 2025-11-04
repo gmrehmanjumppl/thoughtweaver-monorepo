@@ -1,21 +1,20 @@
 import { useState, useRef, useEffect, memo, useMemo } from 'react';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Badge } from '../ui/badge';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { SidebarTrigger } from '../ui/sidebar';
-import { Progress } from '../ui/progress';
-import { AVAILABLE_LLM_MODELS } from '../../constants';
 import {
+  Button,
+  Card,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Badge,
+  Input,
+  Textarea,
+  SidebarTrigger,
+  Progress,
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselPrevious,
   CarouselNext,
-} from '../ui/carousel';
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -23,9 +22,11 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-} from '../ui/dialog';
-
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@thoughtweaver/ui';
+import { AVAILABLE_LLM_MODELS } from '../../constants';
 import {
   Lightbulb,
   Target,

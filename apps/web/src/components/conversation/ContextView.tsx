@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Textarea } from '../ui/textarea';
-import { Badge } from '../ui/badge';
+import {
+  Button,
+  Card,
+  Textarea,
+  Badge,
+} from '@thoughtweaver/ui';
 import { Plus, X } from 'lucide-react';
 
 interface ContextViewProps {

@@ -1,11 +1,14 @@
 import { useState, memo, useCallback, useEffect } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { SidebarTrigger } from '../ui/sidebar';
-import { Avatar, AvatarFallback } from '../ui/avatar';
-import { Badge } from '../ui/badge';
+import {
+  Button,
+  Card,
+  SidebarTrigger,
+  Avatar,
+  AvatarFallback,
+  Badge,
+} from '@thoughtweaver/ui';
 import { 
   Plus,
   Edit,

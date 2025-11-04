@@ -1,13 +1,25 @@
 import { useState } from 'react';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { SidebarTrigger } from '../ui/sidebar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Badge } from '../ui/badge';
-import { Progress } from '../ui/progress';
+import {
+  Button,
+  Card,
+  Input,
+  Label,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  SidebarTrigger,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Badge,
+  Progress,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@thoughtweaver/ui';
 import { 
   User,
   Settings,
@@ -20,13 +32,6 @@ import {
   Sparkles,
   Brain
 } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
 import { toast } from 'sonner';
 
 import { useAuth, useNavigation } from '../../contexts';

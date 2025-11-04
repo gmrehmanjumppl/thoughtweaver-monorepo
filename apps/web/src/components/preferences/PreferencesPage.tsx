@@ -1,12 +1,16 @@
 import { useState, useCallback, useEffect } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { SidebarTrigger } from '../ui/sidebar';
-import { Checkbox } from '../ui/checkbox';
-import { Label } from '../ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import {
+  Button,
+  Card,
+  SidebarTrigger,
+  Checkbox,
+  Label,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@thoughtweaver/ui';
 import { 
   Save,
   AlertCircle,

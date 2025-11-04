@@ -1,13 +1,26 @@
 import { useState, useEffect } from 'react';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { Label } from '../ui/label';
-import { Switch } from '../ui/switch';
-import { SidebarTrigger } from '../ui/sidebar';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { SpectrumSlider } from '../ui/spectrum-slider';
+import {
+  Button,
+  Card,
+  Input,
+  Textarea,
+  Label,
+  Switch,
+  SidebarTrigger,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  SpectrumSlider,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@thoughtweaver/ui';
 import { 
   Save,
   ArrowLeft,
@@ -19,17 +32,6 @@ import {
   Shield,
   EyeOff
 } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '../ui/alert-dialog';
 import { getAssistantById } from './assistantData';
 import { useAuth, useNavigation, useSelection } from '../../contexts';
 

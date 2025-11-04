@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Textarea } from '../ui/textarea';
-import { Badge } from '../ui/badge';
-import { SidebarTrigger } from '../ui/sidebar';
+import {
+  Button,
+  Card,
+  Textarea,
+  Badge,
+  SidebarTrigger,
+} from '@thoughtweaver/ui';
 import { 
   FileText,
   Upload,

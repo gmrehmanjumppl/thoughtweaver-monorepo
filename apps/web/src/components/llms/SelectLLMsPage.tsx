@@ -1,11 +1,17 @@
 import { useState } from 'react';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { Switch } from '../ui/switch';
-import { SidebarTrigger } from '../ui/sidebar';
-import { Slider } from '../ui/slider';
-import { Label } from '../ui/label';
+import {
+  Button,
+  Card,
+  Badge,
+  Switch,
+  SidebarTrigger,
+  Slider,
+  Label,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@thoughtweaver/ui';
 import { 
   Cpu,
   Zap,
@@ -13,12 +19,6 @@ import {
   Check,
   Info
 } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '../ui/tooltip';
 
 interface LLMModel {
   id: string;

@@ -1,10 +1,16 @@
 import { useState, memo } from 'react';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Badge } from '../ui/badge';
-import { Progress } from '../ui/progress';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import {
+  Button,
+  Card,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Badge,
+  Progress,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@thoughtweaver/ui';
 import {
   Sparkles,
   CheckCircle2,

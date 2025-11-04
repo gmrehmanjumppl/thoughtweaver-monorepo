@@ -9,29 +9,29 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { RadioGroup } from '../ui/radio-group';
-import { SidebarTrigger } from '../ui/sidebar';
-import { Textarea } from '../ui/textarea';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { 
+import {
+  Button,
+  Card,
+  RadioGroup,
+  SidebarTrigger,
+  Textarea,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-  type CarouselApi 
-} from '../ui/carousel';
-import { AVAILABLE_LLM_MODELS } from '../../constants';
-import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../ui/dialog';
+  type CarouselApi,
+} from '@thoughtweaver/ui';
+import { AVAILABLE_LLM_MODELS } from '../../constants';
 import { 
   Lightbulb, 
   Sparkles,

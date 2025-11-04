@@ -1,11 +1,30 @@
 import { useState, useEffect } from 'react';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { Badge } from '../ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import {
+  Button,
+  Card,
+  Input,
+  Textarea,
+  Badge,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@thoughtweaver/ui';
 import { AVAILABLE_LLM_MODELS } from '../../constants';
 import { 
   ArrowLeft,
@@ -28,24 +47,7 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '../ui/alert-dialog';
 import { useAuth, useNavigation, useSelection } from '../../contexts';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
 import { assistants } from '../assistant/assistantData';
 
 interface WorkflowStep {
