@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "paths": {
+      "@thoughtweaver/ui": ["./packages/ui/src"],
+      "@thoughtweaver/types": ["./packages/types/src"],
+      "@thoughtweaver/sdk": ["./packages/sdk/src"],
+      "@thoughtweaver/config": ["./packages/config/src"],
+      "@thoughtweaver/utils": ["./packages/utils/src"],
+      "@thoughtweaver/ai": ["./packages/ai/src"]
+    }
+  },
+  "include": [],
+  "exclude": ["node_modules"]
+}
+

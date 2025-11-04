@@ -1,0 +1,39 @@
+name: Sync Figma Designs
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # Daily at 9 AM
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      
+      - name: Install pnpm
+        run: npm install -g pnpm
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Sync Figma tokens
+        env:
+          FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
+          FIGMA_FILE_KEY: ${{ secrets.FIGMA_FILE_KEY }}
+        run: pnpm --filter figma-sync sync:tokens
+      
+      - name: Create PR if changes
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: sync design tokens from Figma'
+          title: 'Sync Design Tokens from Figma'
+          body: 'Automated sync of design tokens from Figma'
+
