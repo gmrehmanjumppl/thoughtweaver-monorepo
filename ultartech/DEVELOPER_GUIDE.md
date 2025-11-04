@@ -12,12 +12,16 @@
 1. [Prerequisites](#prerequisites)
 2. [Initial Setup](#initial-setup)
 3. [Project Structure Setup](#project-structure-setup)
-4. [Development Workflow](#development-workflow)
-5. [Figma Integration Setup](#figma-integration-setup)
-6. [Testing Setup](#testing-setup)
-7. [CI/CD Setup](#cicd-setup)
-8. [Common Tasks](#common-tasks)
-9. [Troubleshooting](#troubleshooting)
+4. [Environment Variables Setup](#environment-variables-setup)
+5. [Database Setup](#step-4-database-setup)
+6. [Supabase Authentication Setup (OAuth)](#step-5-set-up-supabase-authentication-oauth)
+7. [Verify Setup](#step-6-verify-setup)
+8. [Development Workflow](#development-workflow)
+9. [Figma Integration Setup](#figma-integration-setup)
+10. [Testing Setup](#testing-setup)
+11. [CI/CD Setup](#cicd-setup)
+12. [Common Tasks](#common-tasks)
+13. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -608,7 +612,18 @@ ANTHROPIC_API_KEY=sk-ant-...
 1. Go to Supabase Dashboard
 2. Create new project
 3. Go to SQL Editor
-4. Run database migrations (see `packages/database/migrations/`)
+4. Run database migrations (see `infra/supabase/migrations/`)
+
+**Migration Files**:
+- `infra/supabase/migrations/001_initial_schema.sql` - Complete database schema
+- `infra/supabase/migrations/002_seed_data.sql` - Default data (assistants, workflows)
+
+**To Run Migrations**:
+1. Open Supabase Dashboard → SQL Editor
+2. Click "New Query"
+3. Copy and paste contents of `001_initial_schema.sql`
+4. Click "Run" (or press Ctrl+Enter)
+5. Repeat for `002_seed_data.sql`
 
 #### Option B: Local PostgreSQL
 
@@ -622,11 +637,62 @@ docker run -d \
   postgres:15
 
 # Run migrations
-cd packages/database
-pnpm run migrate:dev
+cd infra/supabase/migrations
+psql -h localhost -U postgres -d thoughtweaver -f 001_initial_schema.sql
+psql -h localhost -U postgres -d thoughtweaver -f 002_seed_data.sql
 ```
 
-### Step 5: Verify Setup
+### Step 5: Set Up Supabase Authentication (OAuth)
+
+**⚠️ Important**: Authentication is already integrated in the code, but you need to enable OAuth providers in Supabase.
+
+#### Quick Setup Steps
+
+1. **Enable Google OAuth Provider**:
+   - Go to Supabase Dashboard → **Authentication** → **Providers**
+   - Find **Google** provider and click **Enable**
+   - Configure OAuth credentials (see detailed guide below)
+
+2. **Get Google OAuth Credentials** (if using your own):
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create project → Enable Google+ API
+   - Create OAuth Client ID (Web application)
+   - Add redirect URI: `https://your-project.supabase.co/auth/v1/callback`
+   - Copy Client ID and Client Secret
+
+3. **Configure Redirect URLs in Supabase**:
+   - Go to Supabase Dashboard → **Authentication** → **URL Configuration**
+   - Set **Site URL**: `http://localhost:3000`
+   - Add **Redirect URLs**:
+     ```
+     http://localhost:3000
+     http://localhost:3000/**
+     ```
+
+4. **Add Credentials to Supabase**:
+   - Go to **Authentication** → **Providers** → **Google**
+   - Paste your **Client ID** and **Client Secret**
+   - Click **Save**
+
+#### Common Error
+
+**Error**: `"Unsupported provider: provider is not enabled"`
+
+**Solution**: Enable the OAuth provider in Supabase Dashboard → Authentication → Providers
+
+#### Detailed Guide
+
+For complete step-by-step instructions with screenshots and troubleshooting, see:
+- **[SUPABASE_OAUTH_SETUP.md](./SUPABASE_OAUTH_SETUP.md)** - Complete OAuth setup guide
+
+This guide includes:
+- Detailed Google Cloud Console setup
+- Apple OAuth setup (optional)
+- Troubleshooting common errors
+- Redirect URL configuration
+- Testing authentication flow
+
+### Step 6: Verify Setup
 
 ```bash
 # Run all tests
@@ -638,6 +704,16 @@ pnpm build
 # Start development servers
 pnpm dev
 ```
+
+**Verify Authentication**:
+1. Start dev server: `cd apps/web && pnpm dev`
+2. Open browser: http://localhost:3000
+3. Click "Continue with Google"
+4. You should be redirected to Google sign-in
+5. After signing in, you should be redirected back to the app
+
+**If you see error**: `"Unsupported provider: provider is not enabled"`  
+→ See Step 5 above or [SUPABASE_OAUTH_SETUP.md](./SUPABASE_OAUTH_SETUP.md)
 
 ---
 
@@ -653,21 +729,32 @@ You now have:
 
 **Continue with:**
 
-1. **Set up packages** - See [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) Phase 2
+1. **Run Database Migrations** ⚠️
+   - Go to Supabase Dashboard → SQL Editor
+   - Run `infra/supabase/migrations/001_initial_schema.sql`
+   - Run `infra/supabase/migrations/002_seed_data.sql`
+
+2. **Enable OAuth Providers** ⚠️
+   - See Step 5 above or [SUPABASE_OAUTH_SETUP.md](./SUPABASE_OAUTH_SETUP.md)
+   - Enable Google OAuth in Supabase Dashboard
+   - Configure redirect URLs
+
+3. **Set up packages** - See [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) Phase 2
    - UI Package setup
    - Types Package setup
    - AI Package setup
    - SDK Package setup
 
-2. **Set up applications** - See [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) Phase 3 & 4
+4. **Set up applications** - See [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) Phase 3 & 4
    - Next.js Web App setup
    - NestJS API setup
 
-3. **Migrate Figma code** - See [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) Phase 2
+5. **Migrate Figma code** - See [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) Phase 2
    - Copy components from `thoughtweaver-figma` repo
    - Transform to production structure
 
-**For detailed package setup instructions, see [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md)**
+**For detailed package setup instructions, see [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md)**  
+**For OAuth setup troubleshooting, see [SUPABASE_OAUTH_SETUP.md](./SUPABASE_OAUTH_SETUP.md)**
 
 ---
 
@@ -1474,6 +1561,25 @@ pnpm test
 2. Verify token has correct permissions
 3. Regenerate token if needed
 
+### Issue: OAuth Authentication Fails
+
+**Error**: `"Unsupported provider: provider is not enabled"`
+
+**Solution**:
+1. Go to Supabase Dashboard → Authentication → Providers
+2. Enable the OAuth provider (Google, Apple, etc.)
+3. Configure OAuth credentials if needed
+4. Set redirect URLs correctly
+5. See [SUPABASE_OAUTH_SETUP.md](./SUPABASE_OAUTH_SETUP.md) for detailed guide
+
+**Error**: `"redirect_uri_mismatch"`
+
+**Solution**:
+1. Check redirect URLs in Supabase Dashboard → Authentication → URL Configuration
+2. Ensure Site URL is: `http://localhost:3000`
+3. Ensure Redirect URLs include: `http://localhost:3000` and `http://localhost:3000/**`
+4. In Google Cloud Console, ensure redirect URI matches: `https://your-project.supabase.co/auth/v1/callback`
+
 ### Issue: Database Connection Fails
 
 **Error**: `Connection refused`
@@ -1514,7 +1620,11 @@ PORT=3001 pnpm dev
 **Document Maintained By**: Development Team  
 **Last Updated**: November 2025  
 **Related Documents**: 
-- [ARCHITECTURE.md](./ARCHITECTURE.md)
-- [FIGMA_INTEGRATION.md](./FIGMA_INTEGRATION.md)
-- [TESTING_STRATEGY.md](./TESTING_STRATEGY.md)
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - Complete architecture guide
+- [FIGMA_INTEGRATION.md](./FIGMA_INTEGRATION.md) - Figma sync setup
+- [TESTING_STRATEGY.md](./TESTING_STRATEGY.md) - Testing guide
+- [SUPABASE_OAUTH_SETUP.md](./SUPABASE_OAUTH_SETUP.md) - Complete OAuth setup guide
+- [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) - Migration instructions
+- [CLIENT_DEPLOYMENT_CONFIG.md](./CLIENT_DEPLOYMENT_CONFIG.md) - Client deployment configuration guide
+- [COMPLETE_TECHNICAL_DOCUMENTATION.md](./COMPLETE_TECHNICAL_DOCUMENTATION.md) - **Complete technical implementation details, fixes, and code**
 

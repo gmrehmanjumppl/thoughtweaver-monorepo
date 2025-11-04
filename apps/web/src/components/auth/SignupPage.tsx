@@ -7,26 +7,24 @@ export function SignupPage() {
   const { login } = useAuth();
   const { navigate } = useNavigation();
 
-  const handleGoogleSignup = () => {
-    // Mock Google signup
-    login({
-      id: '1',
-      name: 'Creative Thinker',
-      email: 'user@example.com',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=CreativeThinker'
-    });
-    navigate('home');
+  const handleGoogleSignup = async () => {
+    try {
+      await login('google');
+      // Navigation will happen automatically via auth state change
+    } catch (error) {
+      console.error('Google signup error:', error);
+      // You can add error toast/notification here
+    }
   };
 
-  const handleAppleSignup = () => {
-    // Mock Apple signup
-    login({
-      id: '1',
-      name: 'Creative Thinker',
-      email: 'user@example.com',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=CreativeThinker'
-    });
-    navigate('home');
+  const handleAppleSignup = async () => {
+    try {
+      await login('apple');
+      // Navigation will happen automatically via auth state change
+    } catch (error) {
+      console.error('Apple signup error:', error);
+      // You can add error toast/notification here
+    }
   };
 
   return (

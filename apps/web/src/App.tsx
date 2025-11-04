@@ -26,7 +26,7 @@
  * - Created 4 context providers: Auth, Navigation, Conversation, Selection
  */
 
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { SignupPage } from './components/auth/SignupPage';
 import { AppLayout } from './components/layout/AppLayout';
 
@@ -65,11 +65,47 @@ function LoadingSpinner() {
 }
 
 function AppContent() {
-  const { user, isAuthenticated } = useAuth();
-  const { currentPage } = useNavigation();
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const { currentPage, navigate } = useNavigation();
 
-  if (!isAuthenticated && currentPage === 'signup') {
+  // Navigate to home when user becomes authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (currentPage === 'signup' || !currentPage) {
+        navigate('home');
+      }
+    } else if (!isAuthenticated && currentPage !== 'signup') {
+      navigate('signup');
+    }
+  }, [isAuthenticated, currentPage, navigate]);
+
+  // Show loading state while checking auth
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show signup page if not authenticated
+  if (!isAuthenticated) {
     return <SignupPage />;
+  }
+
+  // If authenticated but no valid page, show home
+  if (isAuthenticated && currentPage === 'signup') {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
+          <p className="text-gray-600">Redirecting...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
