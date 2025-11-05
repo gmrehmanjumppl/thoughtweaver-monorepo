@@ -1,25 +1,37 @@
 import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import { SupabaseService } from '../../supabase/supabase.service';
 
 @Injectable()
-export class SupabaseJwtStrategy {
+export class SupabaseJwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private configService: ConfigService,
-    private jwtService: JwtService,
-  ) {}
+    private supabaseService: SupabaseService,
+  ) {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: configService.get<string>('SUPABASE_JWT_SECRET') || 'your-jwt-secret',
+    });
+  }
 
-  async validate(token: string) {
-    // Verify JWT token with Supabase
-    // This should call Supabase auth API to verify the token
-    try {
-      // Implement Supabase JWT verification
-      // For now, just decode and return
-      const payload = this.jwtService.decode(token);
-      return payload;
-    } catch (error) {
-      throw new Error('Invalid token');
+  async validate(payload: any) {
+    // Verify token with Supabase
+    const {
+      data: { user },
+    } = await this.supabaseService.auth.getUser(payload.sub);
+
+    if (!user) {
+      return null;
     }
+
+    return {
+      id: user.id,
+      email: user.email,
+      ...user.user_metadata,
+    };
   }
 }
 

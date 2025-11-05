@@ -9,11 +9,12 @@ export class SupabaseService implements OnModuleInit {
   constructor(private configService: ConfigService) {}
 
   onModuleInit() {
-    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL') || 
+                        this.configService.get<string>('NEXT_PUBLIC_SUPABASE_URL');
     const supabaseServiceKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Supabase configuration is missing');
+      throw new Error('Supabase configuration is missing. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
     }
 
     this.client = createClient(supabaseUrl, supabaseServiceKey, {
