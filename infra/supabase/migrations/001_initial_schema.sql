@@ -31,7 +31,17 @@ CREATE POLICY "Users can insert own profile"
   ON profiles FOR INSERT
   WITH CHECK (auth.uid() = id);
 
--- Projects
+-- Teams (created before projects because projects references teams)
+CREATE TABLE teams (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  owner_id UUID REFERENCES profiles(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
+
+-- Projects (created after teams)
 CREATE TABLE projects (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
@@ -48,16 +58,6 @@ ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can manage own projects"
   ON projects FOR ALL
   USING (auth.uid() = user_id);
-
--- Teams
-CREATE TABLE teams (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
-  owner_id UUID REFERENCES profiles(id),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
 
 -- Team Members
 CREATE TABLE team_members (
@@ -238,4 +238,107 @@ CREATE TRIGGER update_contexts_updated_at BEFORE UPDATE ON contexts
 
 CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON projects
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Subscriptions (Stripe billing)
+CREATE TABLE subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  team_id UUID REFERENCES teams(id) ON DELETE SET NULL,
+  stripe_subscription_id TEXT UNIQUE,
+  stripe_customer_id TEXT,
+  plan TEXT NOT NULL CHECK (plan IN ('free', 'pro', 'team')),
+  status TEXT CHECK (status IN ('active', 'canceled', 'past_due', 'trialing')) DEFAULT 'active',
+  current_period_start TIMESTAMP WITH TIME ZONE,
+  current_period_end TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own subscriptions"
+  ON subscriptions FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can view team subscriptions"
+  ON subscriptions FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM team_members
+      WHERE team_members.team_id = subscriptions.team_id
+      AND team_members.user_id = auth.uid()
+    )
+  );
+
+-- Usage Tracking (for LLM tokens, messages, conversations)
+CREATE TABLE usage_tracking (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  team_id UUID REFERENCES teams(id) ON DELETE SET NULL,
+  conversation_id UUID REFERENCES conversations(id) ON DELETE SET NULL,
+  metric_type TEXT NOT NULL CHECK (metric_type IN ('conversation', 'message', 'token')),
+  count INTEGER NOT NULL DEFAULT 1,
+  cost_usd NUMERIC(10, 6) DEFAULT 0, -- Cost in USD (for token usage)
+  model_used TEXT, -- e.g., 'openai/gpt-5-mini'
+  provider TEXT, -- e.g., 'openai', 'anthropic', 'google', 'grok'
+  metadata JSONB DEFAULT '{}', -- Additional data (input_tokens, output_tokens, etc.)
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE usage_tracking ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own usage"
+  ON usage_tracking FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can view team usage"
+  ON usage_tracking FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM team_members
+      WHERE team_members.team_id = usage_tracking.team_id
+      AND team_members.user_id = auth.uid()
+    )
+  );
+
+-- Indexes for usage tracking
+CREATE INDEX idx_usage_tracking_user_id ON usage_tracking(user_id);
+CREATE INDEX idx_usage_tracking_team_id ON usage_tracking(team_id);
+CREATE INDEX idx_usage_tracking_created_at ON usage_tracking(created_at);
+CREATE INDEX idx_usage_tracking_metric_type ON usage_tracking(metric_type);
+CREATE INDEX idx_subscriptions_user_id ON subscriptions(user_id);
+CREATE INDEX idx_subscriptions_stripe_subscription_id ON subscriptions(stripe_subscription_id);
+
+-- Trigger for subscriptions updated_at
+CREATE TRIGGER update_subscriptions_updated_at BEFORE UPDATE ON subscriptions
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Function to automatically create profile when user signs up
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, name, avatar_url, preferences)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email),
+    COALESCE(NEW.raw_user_meta_data->>'avatar_url', NULL),
+    '{}'::jsonb
+  );
+  
+  -- Auto-create free subscription for new user
+  INSERT INTO public.subscriptions (user_id, plan, status)
+  VALUES (
+    NEW.id,
+    'free',
+    'active'
+  );
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger to auto-create profile on user signup
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
