@@ -92,14 +92,35 @@ class ApiClient {
     const url = `${this.baseURL}${endpoint}`;
     const headers = await this.buildHeaders(options?.headers);
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers,
-      ...options,
-    });
+    console.log('📤 API Request:', { method: 'GET', url, baseURL: this.baseURL });
 
-    const result = await this.handleResponse<T>(response);
-    return result.data;
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+        ...options,
+      });
+
+      const result = await this.handleResponse<T>(response);
+      return result.data;
+    } catch (error: any) {
+      console.error('❌ API Request failed:', {
+        url,
+        method: 'GET',
+        error: error.message,
+        cause: error.cause,
+      });
+      
+      // Check if it's a network error (API server not running)
+      if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+        throw new Error(
+          `API server is not running or not accessible at ${this.baseURL}.\n` +
+          `Please start the API server: cd apps/api && pnpm dev`
+        );
+      }
+      
+      throw error;
+    }
   }
 
   /**

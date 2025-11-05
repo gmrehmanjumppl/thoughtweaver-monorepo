@@ -27,14 +27,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Load user profile from Supabase
   async function loadUserProfile(supabaseUser: SupabaseUser) {
     console.log('Loading user profile for:', supabaseUser.email);
+    console.log('🔍 User metadata:', JSON.stringify(supabaseUser.user_metadata, null, 2));
     
     // CRITICAL: Set user immediately with Supabase metadata first
     // This prevents infinite loading if the profile query hangs
+    // Google OAuth stores avatar in user_metadata.avatar_url or user_metadata.picture
+    // Also check app_metadata which Google sometimes uses
+    const avatarUrl = supabaseUser.user_metadata?.avatar_url || 
+                      supabaseUser.user_metadata?.picture || 
+                      supabaseUser.user_metadata?.avatar ||
+                      supabaseUser.app_metadata?.avatar_url ||
+                      supabaseUser.app_metadata?.picture ||
+                      `https://api.dicebear.com/7.x/avataaars/svg?seed=${supabaseUser.id}`;
+    
+    console.log('🖼️ Avatar URL:', avatarUrl);
+    
     const baseUserData: User = {
       id: supabaseUser.id,
-      name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
+      name: supabaseUser.user_metadata?.full_name || 
+            supabaseUser.user_metadata?.name ||
+            supabaseUser.email?.split('@')[0] || 
+            'User',
       email: supabaseUser.email || '',
-      avatar: supabaseUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${supabaseUser.id}`,
+      avatar: avatarUrl,
     };
     
     // Set user immediately so app can render

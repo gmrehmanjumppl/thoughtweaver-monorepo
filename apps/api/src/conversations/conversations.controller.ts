@@ -20,6 +20,10 @@ export class ConversationsController {
 
   @Get()
   async findAll(@CurrentUser() user: any) {
+    console.log('📥 GET /conversations - User:', user?.id || 'no user');
+    if (!user?.id) {
+      throw new Error('User ID is missing from request');
+    }
     return this.conversationsService.findAll(user.id);
   }
 

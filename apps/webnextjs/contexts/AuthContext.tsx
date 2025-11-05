@@ -28,86 +28,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Load user profile from Supabase
   async function loadUserProfile(supabaseUser: SupabaseUser) {
+    console.log('Loading user profile for:', supabaseUser.email);
+    console.log('🔍 User metadata:', JSON.stringify(supabaseUser.user_metadata, null, 2));
+    
+    // CRITICAL: Set user immediately with Supabase metadata first
+    // This prevents infinite loading if the profile query hangs
+    // Google OAuth stores avatar in user_metadata.avatar_url or user_metadata.picture
+    // Also check app_metadata which Google sometimes uses
+    const avatarUrl = supabaseUser.user_metadata?.avatar_url || 
+                      supabaseUser.user_metadata?.picture || 
+                      supabaseUser.user_metadata?.avatar ||
+                      supabaseUser.app_metadata?.avatar_url ||
+                      supabaseUser.app_metadata?.picture ||
+                      `https://api.dicebear.com/7.x/avataaars/svg?seed=${supabaseUser.id}`;
+    
+    console.log('🖼️ Avatar URL:', avatarUrl);
+    
+    const baseUserData: User = {
+      id: supabaseUser.id,
+      name: supabaseUser.user_metadata?.full_name || 
+            supabaseUser.user_metadata?.name ||
+            supabaseUser.email?.split('@')[0] || 
+            'User',
+      email: supabaseUser.email || '',
+      avatar: avatarUrl,
+    };
+    
+    // Set user immediately so app can render
+    setUser(baseUserData);
+    setIsLoading(false);
+    console.log('✅ User set immediately, loading profile data in background...');
+    
+    // Load profile data in background (non-blocking)
     try {
-      console.log('Loading user profile for:', supabaseUser.email);
-      
-      // Try to get profile from profiles table
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', supabaseUser.id)
         .single();
 
-      // Handle different error codes
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // No rows returned - profile doesn't exist yet, this is okay
-          console.log('Profile not found, will create new one');
-        } else if (error.code === '42P01') {
-          // Table doesn't exist - migrations haven't been run
-          console.warn('Profiles table does not exist. Please run database migrations.');
-          // Still set user with Supabase metadata
-          const userData: User = {
-            id: supabaseUser.id,
-            name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
-            email: supabaseUser.email || '',
-            avatar: supabaseUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${supabaseUser.id}`,
-          };
-          setUser(userData);
-          setIsLoading(false);
-          return;
-        } else {
-          // Other errors
-          console.error('Error loading profile:', error);
-          // Still set user with Supabase metadata so app can function
-          const userData: User = {
-            id: supabaseUser.id,
-            name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
-            email: supabaseUser.email || '',
-            avatar: supabaseUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${supabaseUser.id}`,
-          };
-          setUser(userData);
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      const userData: User = {
-        id: supabaseUser.id,
-        name: profile?.name || supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
-        email: supabaseUser.email || '',
-        avatar: profile?.avatar_url || supabaseUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${supabaseUser.id}`,
-      };
-
-      console.log('User profile loaded:', userData.email);
-      setUser(userData);
-      setIsLoading(false);
-
-      // Create profile if it doesn't exist (only if table exists)
-      if (!profile && error?.code !== '42P01') {
-        try {
-          await supabase.from('profiles').insert({
-            id: supabaseUser.id,
-            name: userData.name,
-            avatar_url: userData.avatar,
-            preferences: {},
-          });
-        } catch (insertError) {
-          // If insert fails (e.g., table doesn't exist), that's okay
-          console.warn('Could not create profile:', insertError);
-        }
+      if (!error && profile) {
+        // Update user with profile data if found
+        const userData: User = {
+          id: supabaseUser.id,
+          name: profile.name || baseUserData.name,
+          email: supabaseUser.email || '',
+          avatar: profile.avatar_url || baseUserData.avatar,
+        };
+        setUser(userData);
+        console.log('✅ User profile updated from database');
+      } else if (error?.code === 'PGRST116') {
+        // Profile doesn't exist - create it in background
+        console.log('Profile not found, creating new one...');
+        (async () => {
+          try {
+            await supabase.from('profiles').insert({
+              id: supabaseUser.id,
+              name: baseUserData.name,
+              avatar_url: baseUserData.avatar,
+              preferences: {},
+            });
+            console.log('Profile created successfully');
+          } catch (insertError: any) {
+            console.warn('Could not create profile:', insertError);
+          }
+        })();
+      } else if (error?.code === '42P01') {
+        console.warn('Profiles table does not exist. Please run database migrations.');
+      } else {
+        console.warn('Error loading profile:', error);
       }
     } catch (error) {
-      console.error('Error loading user profile:', error);
-      // Fallback: set user with Supabase metadata
-      const userData: User = {
-        id: supabaseUser.id,
-        name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
-        email: supabaseUser.email || '',
-        avatar: supabaseUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${supabaseUser.id}`,
-      };
-      setUser(userData);
-      setIsLoading(false);
+      // Profile query failed - but we already set user, so continue
+      console.warn('Profile query failed (non-critical):', error);
     }
   }
 

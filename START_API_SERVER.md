@@ -2,13 +2,13 @@
 
 ## Problem
 
-The frontend is trying to connect to `http://localhost:4000/api` but getting `ERR_CONNECTION_REFUSED` because the API server isn't running.
+You're seeing `Failed to fetch` error because the API server is not running.
 
-## Solution
+## ✅ Solution
 
-Start the API server in a separate terminal:
+### Step 1: Start the API Server
 
-### Option 1: Start API Server Only
+Open a **new terminal** and run:
 
 ```bash
 cd apps/api
@@ -18,54 +18,62 @@ pnpm dev
 You should see:
 ```
 🚀 API Server running on: http://localhost:4000
-📚 API Documentation: http://localhost:4000/api
-❤️  Health Check: http://localhost:4000/api/health
+✅ Supabase client initialized successfully
 ```
 
-### Option 2: Start All Services (Frontend + API)
+### Step 2: Verify API is Running
 
-From the root directory:
-
+Test the health endpoint:
 ```bash
-pnpm dev
+curl http://localhost:4000/api/health
 ```
 
-This will start both the frontend and API servers.
+Should return: `{"status":"ok"}`
 
-## Verify API is Running
+### Step 3: Refresh Frontend
 
-1. Open: http://localhost:4000/api/health
-2. Should return: `{ "status": "ok" }`
+Refresh your Next.js app (`http://localhost:3000`). The API calls should now work!
 
-## After Starting API Server
+## 🔍 Troubleshooting
 
-1. ✅ Refresh your frontend (`http://localhost:3000` or `http://localhost:5173`)
-2. ✅ Try sending a message again
-3. ✅ It should work now!
+### Issue: Port 4000 already in use
 
-## Troubleshooting
+**Solution**: Change the port in `apps/api/.env`:
+```env
+PORT=4001
+```
 
-**If API fails to start:**
+Then update `apps/webnextjs/.env.local`:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4001/api
+```
 
-1. Check if port 4000 is already in use:
-   ```bash
-   # Windows PowerShell
-   netstat -ano | findstr :4000
-   ```
+### Issue: Still getting "Failed to fetch"
 
-2. Make sure dependencies are installed:
-   ```bash
-   cd apps/api
-   pnpm install
-   ```
+**Check**:
+1. ✅ API server is running (`pnpm dev` in `apps/api`)
+2. ✅ API server shows `🚀 API Server running on: http://localhost:4000`
+3. ✅ No errors in API server console
+4. ✅ Health endpoint works: `curl http://localhost:4000/api/health`
 
-3. Check `.env` file exists in `apps/api/.env`:
-   ```env
-   SUPABASE_URL=https://your-project.supabase.co
-   SUPABASE_ANON_KEY=your-anon-key
-   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-   OPENAI_API_KEY=sk-proj-...
-   PORT=4000
-   FRONTEND_URL=http://localhost:3000
-   ```
+### Issue: CORS errors
 
+The backend now allows multiple origins. If you still see CORS errors:
+1. Check `apps/api/.env` has `FRONTEND_URL=http://localhost:3000`
+2. Restart API server after updating `.env`
+
+## 📋 Quick Checklist
+
+- [ ] ✅ API server is running (`cd apps/api && pnpm dev`)
+- [ ] ✅ Health endpoint works (`curl http://localhost:4000/api/health`)
+- [ ] ✅ No errors in API server console
+- [ ] ✅ `NEXT_PUBLIC_API_URL=http://localhost:4000/api` in `apps/webnextjs/.env.local`
+- [ ] ✅ Frontend refreshed after starting API server
+
+## 🆘 Still Having Issues?
+
+1. **Check API server console** for errors
+2. **Check browser console** for detailed error messages
+3. **Verify Supabase config** - see `FIX_SUPABASE_CONFIG.md`
+
+The API server must be running before the frontend can make requests!

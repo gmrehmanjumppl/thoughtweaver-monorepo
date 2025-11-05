@@ -86,11 +86,12 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
   };
 
   // Load conversations when user is available
+  // Use user?.id to prevent duplicate calls when user object reference changes
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       loadConversations();
     }
-  }, [user]);
+  }, [user?.id]); // Only depend on user ID, not entire user object
 
   const createConversation = async (
     prompt: string,

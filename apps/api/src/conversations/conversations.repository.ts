@@ -8,15 +8,32 @@ export class ConversationsRepository {
   constructor(private readonly supabase: SupabaseService) {}
 
   async findAll(userId: string) {
-    const { data, error } = await this.supabase
-      .getClient()
-      .from('conversations')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+    try {
+      console.log('📋 Fetching conversations for user:', userId);
+      const { data, error } = await this.supabase
+        .getClient()
+        .from('conversations')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return data;
+      if (error) {
+        console.error('❌ Error fetching conversations:', error);
+        // Convert Supabase error to a proper Error object
+        const errorMessage = error.message || `Database error: ${JSON.stringify(error)}`;
+        throw new Error(errorMessage);
+      }
+      
+      console.log(`✅ Found ${data?.length || 0} conversations`);
+      return data || [];
+    } catch (error: any) {
+      console.error('❌ ConversationsRepository.findAll error:', error);
+      // Ensure we throw a proper Error object
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error(`Failed to fetch conversations: ${String(error)}`);
+    }
   }
 
   async findOne(id: string, userId: string) {

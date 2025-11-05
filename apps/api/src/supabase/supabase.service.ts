@@ -17,12 +17,34 @@ export class SupabaseService implements OnModuleInit {
       throw new Error('Supabase configuration is missing. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
     }
 
-    this.client = createClient(supabaseUrl, supabaseServiceKey, {
+    // Validate that URL is not a placeholder
+    if (supabaseUrl.includes('your-project') || supabaseUrl.includes('placeholder')) {
+      throw new Error(
+        `❌ Invalid Supabase URL! Current: ${supabaseUrl}\n` +
+        `Please update apps/api/.env with your actual Supabase URL:\n` +
+        `SUPABASE_URL=https://eisbyyememqqtuvmsagi.supabase.co`
+      );
+    }
+
+    // Validate that service key is not a placeholder
+    if (supabaseServiceKey.includes('your-service-role-key') || supabaseServiceKey.includes('placeholder')) {
+      throw new Error(
+        `❌ Invalid Supabase Service Role Key!\n` +
+        `Please update apps/api/.env with your actual service_role key from:\n` +
+        `https://supabase.com/dashboard/project/eisbyyememqqtuvmsagi/settings/api`
+      );
+    }
+
+    console.log('✅ Supabase client initializing with URL:', supabaseUrl.replace(/\/$/, ''));
+    
+    this.client = createClient(supabaseUrl.replace(/\/$/, ''), supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
       },
     });
+    
+    console.log('✅ Supabase client initialized successfully');
   }
 
   getClient(): SupabaseClient {
