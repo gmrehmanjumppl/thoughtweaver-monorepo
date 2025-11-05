@@ -1,10 +1,14 @@
 import { Module } from '@nestjs/common';
+import { UsersController } from './users.controller';
+import { UsersService } from './users.service';
+import { UsersRepository } from './users.service';
+import { SupabaseModule } from '../supabase/supabase.module';
 
 @Module({
-  imports: [],
-  controllers: [],
-  providers: [],
-  exports: [],
+  imports: [SupabaseModule],
+  controllers: [UsersController],
+  providers: [UsersService, UsersRepository],
+  exports: [UsersService, UsersRepository],
 })
 export class UsersModule {}
 

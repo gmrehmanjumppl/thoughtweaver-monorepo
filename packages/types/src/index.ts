@@ -392,3 +392,438 @@ export type Page =
   | 'projects'
   | string; // Allow dynamic pages like 'ai-assistant-editor-{id}'
 
+/**
+ * API Response wrapper
+ */
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  meta?: {
+    timestamp: string;
+  };
+}
+
+/**
+ * API Error response
+ */
+export interface ApiError {
+  success: false;
+  error: {
+    code: number | string;
+    message: string;
+    timestamp?: string;
+    path?: string;
+  };
+}
+
+// ============================================================================
+// API Conversation Types (matches database schema)
+// ============================================================================
+
+/**
+ * Conversation from API (matches database schema)
+ */
+export interface ApiConversation {
+  id: string;
+  user_id: string;
+  project_id?: string;
+  team_id?: string;
+  title: string;
+  prompt: string;
+  workflow_id?: string;
+  selected_assistants: string[];
+  selected_llm: string;
+  context_id?: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Create conversation DTO
+ */
+export interface CreateConversationDto {
+  title: string;
+  prompt: string;
+  workflowId?: string;
+  selectedAssistants?: string[];
+  selectedLlm?: string;
+  projectId?: string;
+  teamId?: string;
+  contextId?: string;
+}
+
+/**
+ * Update conversation DTO
+ */
+export interface UpdateConversationDto {
+  title?: string;
+  status?: string;
+  selectedAssistants?: string[];
+  selectedLlm?: string;
+  projectId?: string;
+}
+
+// ============================================================================
+// API Message Types (matches database schema)
+// ============================================================================
+
+/**
+ * Message from API (matches database schema)
+ */
+export interface ApiMessage {
+  id: string;
+  conversation_id: string;
+  assistant_id?: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  metadata?: Record<string, any>;
+  token_count?: number;
+  model_used?: string;
+  created_at: string;
+}
+
+/**
+ * Create message DTO
+ */
+export interface CreateMessageDto {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  assistantId?: string;
+  metadata?: Record<string, any>;
+  modelUsed?: string;
+  tokenCount?: number;
+}
+
+/**
+ * Generate message DTO
+ */
+export interface GenerateMessageDto {
+  content: string;
+  assistantId?: string;
+}
+
+/**
+ * Generate message response
+ */
+export interface GenerateMessageResponse {
+  userMessage: ApiMessage;
+  assistantMessage: ApiMessage;
+  usage: {
+    tokens: {
+      prompt: number;
+      completion: number;
+      total: number;
+    };
+    cost: number;
+    model: string;
+    provider: string;
+  };
+}
+
+/**
+ * Generate multiple responses
+ */
+export interface GenerateMultipleResponse {
+  userMessage: ApiMessage;
+  assistantMessages: ApiMessage[];
+  usage: Array<{
+    tokens: {
+      prompt: number;
+      completion: number;
+      total: number;
+    };
+    cost: number;
+    model: string;
+    provider: string;
+  }>;
+}
+
+// ============================================================================
+// API Assistant Types (matches database schema)
+// ============================================================================
+
+/**
+ * Assistant from API (matches database schema)
+ */
+export interface ApiAssistant {
+  id: string;
+  user_id?: string;
+  team_id?: string;
+  name: string;
+  description?: string;
+  avatar_url?: string;
+  color?: string;
+  system_prompt: string;
+  personality: Record<string, any>;
+  is_custom: boolean;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Create assistant DTO
+ */
+export interface CreateAssistantDto {
+  id: string;
+  name: string;
+  description?: string;
+  avatarUrl?: string;
+  color?: string;
+  systemPrompt: string;
+  personality: Record<string, any>;
+  isCustom?: boolean;
+  isDefault?: boolean;
+  teamId?: string;
+}
+
+/**
+ * Update assistant DTO
+ */
+export interface UpdateAssistantDto {
+  name?: string;
+  description?: string;
+  avatarUrl?: string;
+  color?: string;
+  systemPrompt?: string;
+  personality?: Record<string, any>;
+}
+
+// ============================================================================
+// API User Types (matches database schema)
+// ============================================================================
+
+/**
+ * User profile from API (matches database schema)
+ */
+export interface ApiUser {
+  id: string;
+  name?: string;
+  avatar_url?: string;
+  preferences?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Update user DTO
+ */
+export interface UpdateUserDto {
+  name?: string;
+  avatarUrl?: string;
+  preferences?: Record<string, any>;
+}
+
+// ============================================================================
+// API Team Types (matches database schema)
+// ============================================================================
+
+/**
+ * Team from API (matches database schema)
+ */
+export interface ApiTeam {
+  id: string;
+  name: string;
+  owner_id: string;
+  created_at: string;
+}
+
+/**
+ * Team member from API (matches database schema)
+ */
+export interface ApiTeamMember {
+  id: string;
+  team_id: string;
+  user_id: string;
+  role: 'owner' | 'admin' | 'member';
+  status: 'active' | 'pending';
+  joined_at: string;
+}
+
+/**
+ * Create team DTO
+ */
+export interface CreateTeamDto {
+  name: string;
+}
+
+/**
+ * Update team DTO
+ */
+export interface UpdateTeamDto {
+  name?: string;
+}
+
+/**
+ * Add team member DTO
+ */
+export interface AddTeamMemberDto {
+  email: string;
+  role: 'admin' | 'member';
+}
+
+// ============================================================================
+// API Project Types (matches database schema)
+// ============================================================================
+
+/**
+ * Project from API (matches database schema)
+ */
+export interface ApiProject {
+  id: string;
+  user_id: string;
+  team_id?: string;
+  name: string;
+  description?: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Create project DTO
+ */
+export interface CreateProjectDto {
+  name: string;
+  description?: string;
+  teamId?: string;
+}
+
+/**
+ * Update project DTO
+ */
+export interface UpdateProjectDto {
+  name?: string;
+  description?: string;
+  status?: string;
+}
+
+// ============================================================================
+// API Context Types (matches database schema)
+// ============================================================================
+
+/**
+ * Context from API (matches database schema)
+ */
+export interface ApiContext {
+  id: string;
+  user_id: string;
+  project_id?: string;
+  team_id?: string;
+  name: string;
+  content: string;
+  type: 'user' | 'system' | 'project' | 'team';
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Create context DTO
+ */
+export interface CreateContextDto {
+  name: string;
+  content: string;
+  type: 'user' | 'system' | 'project' | 'team';
+  projectId?: string;
+  teamId?: string;
+}
+
+/**
+ * Update context DTO
+ */
+export interface UpdateContextDto {
+  name?: string;
+  content?: string;
+  isActive?: boolean;
+}
+
+// ============================================================================
+// API Workflow Types (matches database schema)
+// ============================================================================
+
+/**
+ * Workflow from API (matches database schema)
+ */
+export interface ApiWorkflow {
+  id: string;
+  user_id?: string;
+  team_id?: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  steps: any; // JSONB
+  is_custom: boolean;
+  is_default: boolean;
+  usage_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Create workflow DTO
+ */
+export interface CreateWorkflowDto {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  steps: any;
+  isCustom?: boolean;
+  teamId?: string;
+}
+
+/**
+ * Update workflow DTO
+ */
+export interface UpdateWorkflowDto {
+  name?: string;
+  description?: string;
+  icon?: string;
+  steps?: any;
+}
+
+// ============================================================================
+// API Subscription Types (matches database schema)
+// ============================================================================
+
+/**
+ * Subscription from API (matches database schema)
+ */
+export interface ApiSubscription {
+  id: string;
+  user_id: string;
+  team_id?: string;
+  stripe_subscription_id?: string;
+  stripe_customer_id?: string;
+  plan: 'free' | 'pro' | 'team';
+  status: 'active' | 'canceled' | 'past_due' | 'trialing';
+  current_period_start?: string;
+  current_period_end?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// ============================================================================
+// API Usage Tracking Types (matches database schema)
+// ============================================================================
+
+/**
+ * Usage tracking from API (matches database schema)
+ */
+export interface ApiUsageTracking {
+  id: string;
+  user_id: string;
+  team_id?: string;
+  conversation_id?: string;
+  metric_type: 'conversation' | 'message' | 'token';
+  count: number;
+  cost_usd: number;
+  model_used?: string;
+  provider?: string;
+  metadata?: Record<string, any>;
+  created_at: string;
+}
+
+

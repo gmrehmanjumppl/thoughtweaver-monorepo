@@ -68,6 +68,8 @@ import optimistAvatar from 'figma:asset/b20d2ead8618218f3f745bbfe7fbfca414f24e8e
 import { assistants as allAssistants } from '../assistant/assistantData';
 import { useAuth, useNavigation, useConversation, useSelection } from '../../contexts';
 import { PRESET_WORKFLOWS, WorkflowStepDefinition } from '../../constants/workflows';
+import { messagesApi } from '../../lib/api/messages.api';
+import type { ApiMessage } from '@thoughtweaver/types';
 
 interface Message {
   id: string;
@@ -433,43 +435,61 @@ export function ConversationView() {
     setMessages(prev => [...prev, systemMessage]);
   };
 
-  const handleSendMessage = () => {
-    if (!input.trim()) return;
+  const handleSendMessage = async () => {
+    if (!input.trim() || !activeConversation) return;
 
-    const userMessage: Message = {
-      id: `msg-${Date.now()}`,
-      role: 'user',
-      content: input.trim(),
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
+    const userMessageText = input.trim();
     setInput('');
-    setUserMessageCount(prev => prev + 1);
-
-    const opportunity = detectWorkflowOpportunity(userMessageCount + 1, userMessage.content);
-    if (opportunity && !currentSuggestion) {
-      setCurrentSuggestion(opportunity);
-      if (opportunity.recommendedAssistants.length > 0) {
-        setSelectedWorkflowAssistant(opportunity.recommendedAssistants[0]);
-      }
-    }
-
     setIsTyping(true);
 
-    setTimeout(() => {
-      const aiMessage: Message = {
-        id: `msg-${Date.now()}`,
-        role: 'assistant',
-        content: `This is a simulated response from ${getAssistant(activeAssistant).name}. In a real app, this would be powered by the selected LLM (${selectedLLM}).`,
-        assistantId: activeAssistant,
-        timestamp: new Date(),
-        llmModel: selectedLLM
+    try {
+      // Generate AI response using the API
+      const response = await messagesApi.generate(activeConversation.id, {
+        content: userMessageText,
+        assistantId: activeAssistant !== 'none' ? activeAssistant : undefined,
+      });
+
+      // Map API messages to local format
+      const userMessage: Message = {
+        id: response.userMessage.id,
+        role: response.userMessage.role as 'user' | 'assistant' | 'system',
+        content: response.userMessage.content,
+        timestamp: new Date(response.userMessage.created_at),
       };
 
-      setMessages(prev => [...prev, aiMessage]);
+      const aiMessage: Message = {
+        id: response.assistantMessage.id,
+        role: response.assistantMessage.role as 'user' | 'assistant' | 'system',
+        content: response.assistantMessage.content,
+        assistantId: response.assistantMessage.assistant_id,
+        timestamp: new Date(response.assistantMessage.created_at),
+        llmModel: response.assistantMessage.model_used,
+      };
+
+      setMessages(prev => [...prev, userMessage, aiMessage]);
+      setUserMessageCount(prev => prev + 1);
+
+      // Check for workflow opportunities
+      const opportunity = detectWorkflowOpportunity(userMessageCount + 1, userMessageText);
+      if (opportunity && !currentSuggestion) {
+        setCurrentSuggestion(opportunity);
+        if (opportunity.recommendedAssistants.length > 0) {
+          setSelectedWorkflowAssistant(opportunity.recommendedAssistants[0]);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      // Show error message to user
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        role: 'system',
+        content: `Error: Failed to generate response. Please try again.`,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleReloadMessage = (messageId: string) => {
@@ -480,34 +500,42 @@ export function ConversationView() {
     console.log(`Message ${messageId} rated:`, rating);
   };
 
+  // Load messages when conversation changes
   useEffect(() => {
-    if (currentPrompt && messages.length === 0) {
-      const userMessage: Message = {
-        id: `msg-${Date.now()}`,
-        role: 'user',
-        content: currentPrompt,
-        timestamp: new Date()
+    if (activeConversation) {
+      const loadMessages = async () => {
+        try {
+          setIsTyping(true);
+          const apiMessages = await messagesApi.getByConversation(activeConversation.id);
+          
+          // Map API messages to local format
+          const mappedMessages: Message[] = apiMessages.map(msg => ({
+            id: msg.id,
+            role: msg.role as 'user' | 'assistant' | 'system',
+            content: msg.content,
+            assistantId: msg.assistant_id,
+            timestamp: new Date(msg.created_at),
+            llmModel: msg.model_used,
+          }));
+
+          setMessages(mappedMessages);
+          
+          // Count user messages
+          const userMsgCount = mappedMessages.filter(m => m.role === 'user').length;
+          setUserMessageCount(userMsgCount);
+        } catch (error) {
+          console.error('Failed to load messages:', error);
+        } finally {
+          setIsTyping(false);
+        }
       };
 
-      setMessages([userMessage]);
-      setUserMessageCount(1);
-      setIsTyping(true);
-
-      setTimeout(() => {
-        const aiMessage: Message = {
-          id: `msg-${Date.now()}`,
-          role: 'assistant',
-          content: `Great! Let's work on this together. I'll help you ${workflow === 'brainstorm' ? 'brainstorm ideas' : workflow === 'problem-solving' ? 'solve this problem' : 'analyze this'}.`,
-          assistantId: activeAssistant,
-          timestamp: new Date(),
-          llmModel: selectedLLM
-        };
-
-        setMessages(prev => [...prev, aiMessage]);
-        setIsTyping(false);
-      }, 1000);
+      loadMessages();
+    } else {
+      setMessages([]);
+      setUserMessageCount(0);
     }
-  }, [currentPrompt]);
+  }, [activeConversation?.id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

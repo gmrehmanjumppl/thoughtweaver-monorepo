@@ -390,10 +390,19 @@ export function HomePage() {
     return AVAILABLE_LLM_MODELS.find(m => m.id === selectedLLM)?.name || 'Select models';
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (prompt.trim()) {
-      createConversation(prompt, selectedWorkflow, selectedAssistants);
-      navigate('conversation');
+      try {
+        await createConversation(
+          prompt,
+          selectedWorkflow,
+          selectedAssistants,
+          selectedLLM
+        );
+        navigate('conversation');
+      } catch (error) {
+        console.error('Failed to create conversation:', error);
+      }
     }
   };
 
