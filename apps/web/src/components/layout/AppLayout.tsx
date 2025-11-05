@@ -153,7 +153,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={() => navigate('ai-assistants')}
-                      isActive={currentPage === 'ai-assistants' || currentPage.startsWith('assistant-editor')}
+                      isActive={currentPage === 'ai-assistants' || (currentPage?.startsWith('ai-assistant-editor-') ?? false)}
                       tooltip="Assistants"
                     >
                       <Bot className="w-4 h-4" />

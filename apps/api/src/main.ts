@@ -35,8 +35,13 @@ async function bootstrap() {
   await app.listen(port);
   
   console.log(`🚀 API Server running on: http://localhost:${port}`);
-  console.log(`📚 API Documentation: http://localhost:${port}/api`);
+  console.log(`📚 API Documentation: See apps/api/API_DOCUMENTATION.md`);
   console.log(`❤️  Health Check: http://localhost:${port}/api/health`);
+  console.log(`📖 Quick Reference:`);
+  console.log(`   - Health: GET http://localhost:${port}/api/health`);
+  console.log(`   - Conversations: GET http://localhost:${port}/api/conversations`);
+  console.log(`   - Messages: GET http://localhost:${port}/api/conversations/:id/messages`);
+  console.log(`   - Assistants: GET http://localhost:${port}/api/assistants`);
 }
 
 bootstrap();

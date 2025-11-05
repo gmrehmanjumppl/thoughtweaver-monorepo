@@ -145,7 +145,7 @@ export class TeamsRepository {
       throw new Error(`Failed to search users: ${userError.message}`);
     }
 
-    const user = users.find(u => u.email === addDto.email);
+    const user = users?.find((u: any) => u.email === addDto.email);
     if (!user) {
       throw new NotFoundException(`User with email ${addDto.email} not found`);
     }

@@ -72,18 +72,16 @@ function AppContent() {
   useEffect(() => {
     const hash = window.location.hash;
     
-    // If hash contains access_token, wait for Supabase to process OAuth callback
+    // If hash contains access_token, DON'T clear it - let Supabase process it first
+    // Supabase will automatically handle the OAuth callback and clear the hash
     if (hash.includes('access_token')) {
-      const timer = setTimeout(() => {
-        if (window.location.hash) {
-          console.log('Clearing OAuth hash fragment');
-          window.history.replaceState(null, '', window.location.pathname + window.location.search);
-        }
-      }, 2000); // Wait 2 seconds for Supabase to process OAuth callback
-      
-      return () => clearTimeout(timer);
-    } else if (hash) {
-      // Immediately clear non-auth hash fragments (like after logout)
+      console.log('OAuth callback detected - letting Supabase process token...');
+      // Don't clear hash at all - Supabase needs it to process the token
+      // Supabase will clear it automatically after processing
+      // We'll just wait for the onAuthStateChange SIGNED_IN event
+      return;
+    } else if (hash && !hash.includes('access_token')) {
+      // Only clear non-auth hash fragments (like after logout)
       console.log('Clearing hash fragment:', hash);
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
     }
@@ -91,17 +89,31 @@ function AppContent() {
 
   // Navigate to home when user becomes authenticated
   useEffect(() => {
+    // Wait a bit longer if we just came from OAuth callback
+    const hash = typeof window !== 'undefined' ? window.location.hash : '';
+    const isOAuthCallback = hash.includes('access_token') || hash.includes('type=recovery');
+    
     if (isAuthenticated && user) {
       // Force navigation to home if on signup page or no page set
       if (currentPage === 'signup' || currentPage === null || !currentPage) {
         console.log('Navigating to home after authentication');
         navigate('home');
       }
-    } else if (!isAuthenticated && !isLoading) {
-      // Navigate to signup if not authenticated and not already on signup
-      if (currentPage !== 'signup') {
+    } else if (!isAuthenticated && !isLoading && !isOAuthCallback) {
+      // Only navigate to signup if NOT in the middle of OAuth callback
+      // Give OAuth callback time to process (wait up to 5 seconds)
+      const oAuthTimer = setTimeout(() => {
+        if (!isAuthenticated && !isLoading && currentPage !== 'signup') {
+          console.log('Navigating to signup (not authenticated, OAuth timeout)');
+          navigate('signup');
+        }
+      }, isOAuthCallback ? 5000 : 0);
+      
+      if (!isOAuthCallback) {
         navigate('signup');
       }
+      
+      return () => clearTimeout(oAuthTimer);
     }
   }, [isAuthenticated, user, isLoading, currentPage, navigate]);
 
@@ -122,13 +134,9 @@ function AppContent() {
     return <SignupPage />;
   }
 
-  // If authenticated but no page selected or on signup page, navigate to home
+  // Show loading while navigating if authenticated but no page selected
+  // Navigation will be handled by useEffect, so we just show loading here
   if (isAuthenticated && (currentPage === null || currentPage === 'signup' || !currentPage)) {
-    // This will trigger navigation via useEffect
-    if (currentPage !== 'home') {
-      navigate('home');
-    }
-    // Show loading while navigating
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center gap-3">

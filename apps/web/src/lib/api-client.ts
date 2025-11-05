@@ -39,8 +39,20 @@ class ApiClient {
     try {
       // Import supabase client dynamically to avoid circular dependencies
       const { supabase } = await import('./supabase');
-      const { data: { session } } = await supabase.auth.getSession();
-      return session?.access_token || null;
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Failed to get session:', error);
+        return null;
+      }
+      
+      if (!session?.access_token) {
+        console.warn('No access token in session');
+        return null;
+      }
+      
+      console.log('✅ Token retrieved:', session.access_token.substring(0, 20) + '...');
+      return session.access_token;
     } catch (error) {
       console.error('Failed to get auth token:', error);
       return null;
@@ -59,6 +71,9 @@ class ApiClient {
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+      console.log('📤 Sending request with Authorization header');
+    } else {
+      console.warn('⚠️ No token available - request will fail if endpoint requires auth');
     }
 
     return headers;

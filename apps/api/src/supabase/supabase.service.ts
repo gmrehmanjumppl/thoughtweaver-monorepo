@@ -40,7 +40,7 @@ export class SupabaseService implements OnModuleInit {
   }
 
   // Storage operations
-  get storage() {
+  get storage(): SupabaseClient['storage'] {
     return this.client.storage;
   }
 

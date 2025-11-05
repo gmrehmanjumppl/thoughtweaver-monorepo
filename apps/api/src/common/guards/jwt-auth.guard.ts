@@ -35,16 +35,32 @@ export class JwtAuthGuard implements CanActivate {
 
     const token = authHeader.substring(7);
 
+    // Log token info (first 20 chars only for security)
+    console.log('🔐 Validating token:', token.substring(0, 20) + '...');
+
     try {
       // Verify token with Supabase
+      // Note: getUser() validates the JWT token and returns user info
       const {
         data: { user },
         error,
       } = await this.supabaseService.auth.getUser(token);
 
-      if (error || !user) {
-        throw new UnauthorizedException('Invalid token');
+      if (error) {
+        console.error('❌ Supabase token validation error:', {
+          message: error.message,
+          status: error.status,
+          name: error.name,
+        });
+        throw new UnauthorizedException(`Invalid token: ${error.message}`);
       }
+
+      if (!user) {
+        console.error('❌ No user found for token');
+        throw new UnauthorizedException('Invalid token: User not found');
+      }
+
+      console.log('✅ Token validated successfully for user:', user.email);
 
       // Attach user to request
       request.user = {
@@ -55,7 +71,11 @@ export class JwtAuthGuard implements CanActivate {
 
       return true;
     } catch (error) {
-      throw new UnauthorizedException('Invalid token');
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      console.error('❌ JWT Auth Guard error:', error);
+      throw new UnauthorizedException(`Invalid token: ${error.message}`);
     }
   }
 }

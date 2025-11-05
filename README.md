@@ -36,6 +36,7 @@ pnpm dev
 thoughtweaver-monorepo/
 ├── apps/
 │   ├── web/          # React/Vite Frontend ✅
+│   ├── webnextjs/    # Next.js 16 Frontend ✅ (NEW)
 │   └── api/          # NestJS Backend API ✅
 │
 ├── packages/
@@ -58,7 +59,7 @@ thoughtweaver-monorepo/
 
 ## 🎯 Running Individual Applications
 
-### Frontend (React/Vite)
+### Frontend (React/Vite) - `apps/web`
 
 ```bash
 # Navigate to web app
@@ -79,6 +80,32 @@ VITE_API_URL=http://localhost:4000/api
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
+
+### Frontend (Next.js) - `apps/webnextjs` ⭐ NEW
+
+```bash
+# Navigate to Next.js app
+cd apps/webnextjs
+
+# Install dependencies (if not done at root)
+pnpm install
+
+# Start development server
+pnpm dev
+
+# Access at: http://localhost:3000
+```
+
+**Environment Variables** (`apps/webnextjs/.env.local`):
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000/api
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+**Note**: Both `apps/web` (Vite) and `apps/webnextjs` (Next.js) are available. Choose based on your preference:
+- **Vite**: Faster dev server, simpler setup
+- **Next.js**: Better SEO, SSR, image optimization, API routes
 
 ### Backend API (NestJS)
 
@@ -178,6 +205,14 @@ cd packages/types && pnpm build
 - Tailwind CSS
 - Supabase Auth (client-side)
 - REST API integration
+
+**Frontend (`apps/webnextjs`)** ⭐ NEW:
+- Next.js 16 with App Router
+- React 18+ with TypeScript
+- Tailwind CSS
+- Supabase Auth (client-side)
+- REST API integration
+- SSR & SEO capabilities
 
 **Backend (`apps/api`)**:
 - NestJS 10+

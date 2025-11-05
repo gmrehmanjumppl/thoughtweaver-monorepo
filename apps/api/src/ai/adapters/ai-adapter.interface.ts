@@ -1,6 +1,6 @@
 // Base interfaces and types for AI adapters
 export interface LLMOptions {
-  model: string;
+  model?: string; // Made optional since it's merged with model parameter
   systemPrompt?: string;
   temperature?: number;
   maxTokens?: number;

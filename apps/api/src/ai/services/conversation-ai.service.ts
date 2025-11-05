@@ -7,6 +7,7 @@ import { AssistantsRepository } from '../../assistants/assistants.repository';
 import { ConversationsRepository } from '../../conversations/conversations.repository';
 import { MessagesRepository } from '../../messages/messages.repository';
 import { SupabaseService } from '../../supabase/supabase.service';
+import { MessageRole } from '../../messages/dto/create-message.dto';
 
 export interface GenerateMessageOptions {
   conversationId: string;
@@ -168,7 +169,7 @@ export class ConversationAIService {
     const assistantMessage = await this.messagesRepository.create(
       {
         conversationId: options.conversationId,
-        role: 'assistant',
+        role: MessageRole.ASSISTANT,
         content: response.content,
         assistantId: assistantId,
         modelUsed: `${provider}/${modelId}`,
