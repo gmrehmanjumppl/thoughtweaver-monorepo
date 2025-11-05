@@ -8,7 +8,7 @@ import { SupabaseModule } from '../supabase/supabase.module';
   imports: [SupabaseModule],
   controllers: [AssistantsController],
   providers: [AssistantsService, AssistantsRepository],
-  exports: [AssistantsService],
+  exports: [AssistantsService, AssistantsRepository],
 })
 export class AssistantsModule {}
 

@@ -8,7 +8,7 @@ import { SupabaseModule } from '../supabase/supabase.module';
   imports: [SupabaseModule],
   controllers: [ConversationsController],
   providers: [ConversationsService, ConversationsRepository],
-  exports: [ConversationsService],
+  exports: [ConversationsService, ConversationsRepository],
 })
 export class ConversationsModule {}
 

@@ -28,6 +28,9 @@ apps/api/src/ai/
 │   └── grok/
 │       ├── grok.module.ts
 │       └── grok.provider.ts
+├── services/
+│   ├── conversation-ai.service.ts  # Conversation AI service (assistants + LLM + context)
+│   └── index.ts
 ├── models/
 │   └── model-registry.service.ts   # Model registry (all models)
 ├── prompts/
@@ -115,6 +118,22 @@ Calculates costs based on:
 - Input/output token counts
 - Provider-specific pricing
 
+### ✅ 7. Conversation AI Service (`services/conversation-ai.service.ts`)
+
+**High-level service that integrates assistants with LLM calls and context.**
+
+This service is the main entry point for generating AI responses in conversations. It handles:
+- **Assistant Integration**: Uses assistant's `system_prompt` and `personality` for LLM generation
+- **Context Support**: Fetches and injects context from `contexts` table when available
+- **Conversation History**: Builds conversation history from previous messages
+- **Model Selection**: Supports all LLM providers (OpenAI, Anthropic, Google, Grok)
+- **Usage Tracking**: Automatically tracks tokens and costs for billing
+- **Multi-Assistant**: Supports generating responses from multiple assistants
+
+**Key Methods:**
+- `generateMessage()`: Generate single AI response using assistant
+- `generateFromMultipleAssistants()`: Generate responses from all selected assistants
+
 ---
 
 ## Environment Variables Required
@@ -139,70 +158,192 @@ GROK_API_KEY=...
 
 ---
 
-## Usage Example
+## Usage Examples
 
-### In Messages Service
+### 1. Using ConversationAIService Directly
 
 ```typescript
 import { Injectable } from '@nestjs/common';
-import { AIAdapterService } from '../ai/adapters/ai-adapter.service';
-import { PromptService } from '../ai/prompts/prompt.service';
-import { ModelRegistryService } from '../ai/models/model-registry.service';
+import { ConversationAIService } from '../ai/services/conversation-ai.service';
 
 @Injectable()
 export class MessagesService {
+  constructor(private readonly conversationAI: ConversationAIService) {}
+
+  async generateResponse(conversationId: string, userMessage: string, userId: string) {
+    // Generate AI response using assistant's system prompt and context
+    const response = await this.conversationAI.generateMessage({
+      conversationId,
+      userId,
+      userMessage,
+      assistantId: 'all-rounder', // Optional: uses first selected assistant if not provided
+    });
+
+    return {
+      message: response.message,
+      usage: response.usage, // { tokens, cost, model, provider }
+    };
+  }
+
+  async generateMultipleResponses(conversationId: string, userMessage: string, userId: string) {
+    // Generate responses from all selected assistants
+    const responses = await this.conversationAI.generateFromMultipleAssistants(
+      conversationId,
+      userId,
+      userMessage,
+    );
+
+    return responses.map(r => ({
+      message: r.message,
+      usage: r.usage,
+    }));
+  }
+}
+```
+
+### 2. Using REST API Endpoints
+
+**Generate Single AI Response:**
+```bash
+POST /api/conversations/{conversationId}/messages/generate
+Authorization: Bearer {jwt_token}
+Content-Type: application/json
+
+{
+  "content": "What is React?",
+  "assistantId": "all-rounder"  // Optional
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "userMessage": {
+      "id": "...",
+      "conversationId": "...",
+      "role": "user",
+      "content": "What is React?",
+      "createdAt": "2025-11-05T..."
+    },
+    "assistantMessage": {
+      "id": "...",
+      "conversationId": "...",
+      "role": "assistant",
+      "content": "React is a JavaScript library...",
+      "assistantId": "all-rounder",
+      "modelUsed": "openai/gpt-5-mini",
+      "tokenCount": 150,
+      "metadata": {
+        "tokens": { "prompt": 100, "completion": 50, "total": 150 },
+        "cost": 0.0003,
+        "provider": "openai",
+        "model": "gpt-5-mini"
+      }
+    },
+    "usage": {
+      "tokens": {
+        "prompt": 100,
+        "completion": 50,
+        "total": 150
+      },
+      "cost": 0.0003,
+      "model": "openai/gpt-5-mini",
+      "provider": "openai"
+    }
+  },
+  "meta": {
+    "timestamp": "2025-11-05T..."
+  }
+}
+```
+
+**Generate Multiple Responses (from all selected assistants):**
+```bash
+POST /api/conversations/{conversationId}/messages/generate-multiple
+Authorization: Bearer {jwt_token}
+Content-Type: application/json
+
+{
+  "content": "Explain TypeScript"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "userMessage": { ... },
+    "assistantMessages": [
+      {
+        "assistantId": "all-rounder",
+        "content": "...",
+        "usage": { ... }
+      },
+      {
+        "assistantId": "strategist",
+        "content": "...",
+        "usage": { ... }
+      }
+    ],
+    "usage": [ ... ]
+  }
+}
+```
+
+### 3. How ConversationAIService Works
+
+When you call `generateMessage()`, the service:
+
+1. **Gets Conversation**: Fetches conversation with `selected_assistants`, `selected_llm`, and `context_id`
+2. **Gets Assistant**: Fetches assistant details (`system_prompt`, `personality`)
+3. **Gets Context**: If `context_id` exists, fetches context content from `contexts` table
+4. **Gets History**: Fetches all previous messages in the conversation
+5. **Builds System Prompt**: Uses `PromptService` to build system prompt from assistant
+6. **Builds Messages Array**: Constructs conversation messages with:
+   - System prompt (from assistant)
+   - Context (if available)
+   - Previous messages
+   - Current user message
+7. **Generates Response**: Calls `AIAdapterService.generateFromMessages()` with selected LLM
+8. **Saves Message**: Saves assistant message to database with `assistant_id` and `model_used`
+9. **Tracks Usage**: Records usage in `usage_tracking` table for billing
+
+### 4. Using Lower-Level Services (Advanced)
+
+If you need more control, you can use the lower-level services directly:
+
+```typescript
+import { AIAdapterService } from '../ai/adapters/ai-adapter.service';
+import { PromptService } from '../ai/prompts/prompt.service';
+
+@Injectable()
+export class CustomService {
   constructor(
     private aiAdapter: AIAdapterService,
     private promptService: PromptService,
-    private modelRegistry: ModelRegistryService,
   ) {}
 
-  async generateAIResponse(
-    conversationId: string,
-    userMessage: string,
-    assistantId: string,
-    modelId: string, // e.g., 'openai/gpt-5-mini'
-  ) {
-    // Get assistant configuration
-    const assistant = await this.getAssistant(assistantId);
-    
-    // Parse model ID
-    const { provider, modelName } = this.modelRegistry.parseModelId(modelId);
-    
+  async customGenerate() {
     // Build system prompt
-    const systemPrompt = this.promptService.buildSystemPrompt(assistant);
-    
-    // Get conversation history
-    const messages = await this.getConversationMessages(conversationId);
-    
+    const systemPrompt = this.promptService.buildSystemPrompt({
+      systemPrompt: 'You are a helpful assistant',
+      personality: { tone: 'professional' },
+    });
+
     // Generate response
     const response = await this.aiAdapter.generateFromMessages(
-      provider,
-      modelName,
-      messages,
-      {
-        systemPrompt,
-        temperature: assistant.personality?.temperature || 0.7,
-      }
+      'openai',
+      'gpt-5-mini',
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: 'Hello!' },
+      ],
+      { temperature: 0.7 },
     );
-    
-    // Save AI response to database
-    await this.saveMessage({
-      conversationId,
-      role: 'assistant',
-      content: response.content,
-      assistantId,
-      modelUsed: modelId,
-      tokenCount: response.tokens.total,
-      metadata: {
-        cost: response.cost,
-        provider: response.provider,
-      },
-    });
-    
-    // Track usage
-    await this.trackUsage(conversationId, response);
-    
+
     return response;
   }
 }
@@ -244,6 +385,91 @@ All providers handle errors gracefully:
 
 ---
 
+## Integration with Assistants and Context
+
+### Assistant Integration
+
+Conversations use assistants to define how AI responds:
+
+```typescript
+// Conversation has selected_assistants array
+{
+  "selected_assistants": ["all-rounder", "strategist"],
+  "selected_llm": "openai/gpt-5-mini"
+}
+
+// Each assistant has:
+{
+  "id": "all-rounder",
+  "system_prompt": "You are a helpful AI assistant...",
+  "personality": {
+    "tone": "friendly",
+    "style": "conversational"
+  }
+}
+```
+
+When generating a response:
+1. System uses the first selected assistant (or specified `assistantId`)
+2. Assistant's `system_prompt` becomes the LLM system message
+3. Assistant's `personality` is injected into the prompt
+4. Response is saved with `assistant_id` for tracking
+
+### Context Integration
+
+Conversations can have a `context_id` that references the `contexts` table:
+
+```typescript
+// Conversation has context_id
+{
+  "context_id": "uuid-here",
+  "selected_assistants": ["all-rounder"]
+}
+
+// Context table contains:
+{
+  "id": "uuid-here",
+  "name": "Project Context",
+  "content": "This project is about building a React app...",
+  "type": "project"
+}
+```
+
+When generating a response:
+1. If `context_id` exists, context content is fetched
+2. Context is injected as a system message before conversation history
+3. LLM uses context to provide more relevant responses
+
+### Workflow Example
+
+```typescript
+// 1. User creates conversation with assistant and context
+POST /api/conversations
+{
+  "title": "React Help",
+  "prompt": "Help me learn React",
+  "selectedAssistants": ["all-rounder"],
+  "selectedLlm": "openai/gpt-5-mini",
+  "contextId": "project-context-uuid"
+}
+
+// 2. User sends message
+POST /api/conversations/{id}/messages/generate
+{
+  "content": "What are React hooks?"
+}
+
+// 3. System generates response:
+// - Uses assistant's system prompt
+// - Includes context from context_id
+// - Uses conversation history
+// - Generates with selected LLM
+// - Saves message with assistant_id
+// - Tracks usage for billing
+```
+
+---
+
 ## Next Steps
 
 1. **Install Dependencies**:
@@ -258,27 +484,57 @@ All providers handle errors gracefully:
    # Add other keys as needed
    ```
 
-3. **Integrate with Messages Service**:
-   - Import `AIAdapterService`
-   - Call `generate()` when user sends message
-   - Save AI response to database
-
-4. **Test API**:
+3. **Test API**:
    ```bash
    cd apps/api
    pnpm dev
    ```
 
+4. **Use REST Endpoints**:
+   - `POST /api/conversations/{id}/messages/generate` - Generate single response
+   - `POST /api/conversations/{id}/messages/generate-multiple` - Generate from multiple assistants
+
 ---
 
 ## Current Status
 
-- ✅ All provider implementations complete
+- ✅ All provider implementations complete (OpenAI, Anthropic, Google, Grok)
 - ✅ Unified adapter service ready
 - ✅ Model registry configured
 - ✅ Cost calculator implemented
 - ✅ Prompt service ready
-- ⏳ Integration with Messages service (next step)
+- ✅ **ConversationAIService implemented** - Integrates assistants with LLM and context
+- ✅ **Messages service integration complete** - AI generation endpoints available
+- ✅ **Usage tracking integrated** - Automatic billing tracking
+
+---
+
+## API Endpoints
+
+### Messages Endpoints
+
+**Generate AI Response:**
+- `POST /api/conversations/:conversationId/messages/generate`
+- Body: `{ content: string, assistantId?: string }`
+- Returns: User message + Assistant message + Usage info
+
+**Generate Multiple Responses:**
+- `POST /api/conversations/:conversationId/messages/generate-multiple`
+- Body: `{ content: string }`
+- Returns: User message + Array of assistant messages + Usage info
+
+**List Messages:**
+- `GET /api/conversations/:conversationId/messages`
+- Returns: Array of messages in conversation
+
+**Get Message:**
+- `GET /api/conversations/:conversationId/messages/:id`
+- Returns: Single message
+
+**Create Message (Manual):**
+- `POST /api/conversations/:conversationId/messages`
+- Body: `{ role: 'user' | 'assistant' | 'system', content: string }`
+- Returns: Created message
 
 ---
 
